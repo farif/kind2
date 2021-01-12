@@ -1,0 +1,7 @@
+(ocamllex btorLexer)
+
+(menhir
+ (infer false)
+ (flags --explain --table)
+ (modules btorParser))
+

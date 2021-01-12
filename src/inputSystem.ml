@@ -27,16 +27,22 @@ module SVM = SVar.StateVarMap
 
 type _ t =
 | Lustre : (LustreNode.t S.t * LustreGlobals.t * LustreAst.declaration list) -> LustreNode.t t
+| Btor : BtorAst.btor -> BtorAst.btor t
 | Native : TransSys.t S.t -> TransSys.t t
 | Horn : unit S.t -> unit t
 
 let read_input_lustre input_file = Lustre (LustreInput.of_file input_file)
+let read_input_btor input_file = Btor (BtorInput.of_file input_file)
 
 let translate_contracts_lustre = ContractsToProps.translate_file
 
 let read_input_native input_file = Native (NativeInput.of_file input_file)
 
 let read_input_horn input_file = assert false
+
+let get_btor2 = function
+  | Btor btorprg -> btorprg
+  | _ -> assert false
 
 let silent_contracts_of (type s) : s t -> (Scope.t * string list) list
 = function
@@ -46,6 +52,8 @@ let silent_contracts_of (type s) : s t -> (Scope.t * string list) list
       fun acc { S.scope ; S.source = { N.silent_contracts } } ->
         (scope, silent_contracts) :: acc
     ) []
+
+  | Btor subsystem -> raise (UnsupportedFileFormat "Btor2")
 
   | Native subsystem -> raise (UnsupportedFileFormat "Native")
 
@@ -61,6 +69,7 @@ let ordered_scopes_of (type s) : s t -> Scope.t list = function
     |> List.map (fun { S.scope } -> scope)
 
   | Horn subsystem -> assert false
+  | Btor subsystem -> []
 
 let analyzable_subsystems (type s) : s t -> s SubSystem.t list = function
   | Lustre (subsystem, _, _) ->
@@ -81,6 +90,7 @@ let analyzable_subsystems (type s) : s t -> s SubSystem.t list = function
       [subsystem]
     )
 
+  | Btor subsystem -> []
   | Horn subsystem -> assert false
 
 (* Uid generator for test generation params.
@@ -155,6 +165,7 @@ let maximal_abstraction_for_testgen (type s)
 
   | Native subsystem -> assert false
   | Horn subsystem -> assert false
+  | Btor subsystem -> assert false
 
 let next_analysis_of_strategy (type s)
 : s t -> 'a -> Analysis.param option = function
@@ -194,7 +205,9 @@ let next_analysis_of_strategy (type s)
       )
       |> Strategy.next_analysis results subs_of_scope
   )
-         
+
+  | Btor subsystem -> (function _ -> None)
+
   | Horn subsystem -> (function _ -> assert false)
 
 
@@ -239,6 +252,7 @@ let mcs_params (type s) (input_system : s t) =
     else
       [sub |> param_for_subsystem]
   | Horn _ -> raise (UnsupportedFileFormat "Horn")
+  | Btor _ -> raise (UnsupportedFileFormat "Btor2")
 
 let interpreter_param (type s) (input_system : s t) =
 
@@ -259,6 +273,8 @@ let interpreter_param (type s) (input_system : s t) =
         Scope.Map.empty (S.all_subsystems sub)
     )
     | Horn _ -> raise (UnsupportedFileFormat "Horn")
+    | Btor _ -> raise (UnsupportedFileFormat "Btor2")
+
   in
 
   Analysis.Interpreter {
@@ -275,6 +291,8 @@ let retrieve_lustre_nodes (type s) : s t -> LustreNode.t list =
     List.map (fun sb -> sb.S.source) subsystems
   | Native _ -> failwith "Unsupported input system: Native"
   | Horn _ -> failwith "Unsupported input system: Horn"
+  | Btor _ -> failwith "Unsupported input system: Btor2"
+
   )
 
 let find_lustre_node (type s) : Scope.t -> s t -> LustreNode.t =
@@ -284,6 +302,8 @@ let find_lustre_node (type s) : Scope.t -> s t -> LustreNode.t =
     subsystem.S.source
   | Native _ -> failwith "Unsupported input system: Native"
   | Horn _ -> failwith "Unsupported input system: Horn"
+  | Btor _ -> failwith "Unsupported input system: Btor2"
+
   ) 
 
 let pp_print_subsystems_debug (type s) : Format.formatter -> s t -> unit =
@@ -313,12 +333,14 @@ let lustre_definitions_of_state_var (type s) (input_system : s t) state_var =
   | Lustre _ -> LustreNode.get_state_var_defs state_var
   | Native _ -> failwith "Unsupported input system: Native"
   | Horn _ -> failwith "Unsupported input system: Horn"
+  | Btor _ -> failwith "Unsupported input system: Btor2"
 
 let lustre_source_ast (type s) (input_system : s t) =
   match input_system with
   | Lustre (_,_,ast) -> ast
   | Native _ -> failwith "Unsupported input system: Native"
   | Horn _ -> failwith "Unsupported input system: Horn"
+  | Btor _ -> failwith "Unsupported input system: Btor2"
 
 (* Return a transition system with [top] as the main system, sliced to
    abstractions and implementations as in [abstraction_map]. *)
@@ -338,6 +360,7 @@ let trans_sys_of_analysis (type s) ?(preserve_sig = false)
   | Native sub -> (fun _ -> sub.SubSystem.source, Native sub)
     
   | Horn _ -> assert false
+  | Btor _ -> assert false
 
 
 
@@ -356,6 +379,7 @@ let pp_print_path_pt
     (* assert false *)
 
   | Horn _ -> assert false
+  | Btor _ -> assert false
 
 
 let pp_print_path_xml
@@ -373,6 +397,7 @@ let pp_print_path_xml
 
 
   | Horn _ -> assert false
+  | Btor _ -> assert false
 
 
 let pp_print_path_json
@@ -389,6 +414,7 @@ let pp_print_path_json
     assert false;
 
   | Horn _ -> assert false
+  | Btor _ -> assert false
 
 
 let pp_print_path_in_csv
@@ -404,6 +430,7 @@ let pp_print_path_in_csv
     assert false
 
   | Horn _ -> assert false
+  | Btor _ -> assert false
 
 
 let reconstruct_lustre_streams (type s) (input_system : s t) state_vars =
@@ -412,6 +439,7 @@ let reconstruct_lustre_streams (type s) (input_system : s t) state_vars =
     LustrePath.reconstruct_lustre_streams subsystem state_vars
   | Native _ -> assert false
   | Horn _ -> assert false
+  | Btor _ -> assert false
 
 
 let mk_state_var_to_lustre_name_map (type s):
@@ -446,6 +474,7 @@ let is_lustre_input (type s) (input_system : s t) =
   | Lustre _ -> true
   | Native _ -> false
   | Horn _ -> false
+  | Btor _ -> false
 
 
 let slice_to_abstraction_and_property
@@ -575,6 +604,9 @@ let slice_to_abstraction_and_property
 
     (* No slicing in Horn input *)
     | Horn subsystem -> Horn subsystem
+  
+    | Btor subsystem -> Btor subsystem
+  
   )
 
 
@@ -593,6 +625,8 @@ fun sys top_scope target ->
     Format.printf "can't compile from native input: unsupported"
   | Horn _ ->
     Format.printf "can't compile from horn clause input: unsupported"
+  | Btor _ ->
+    Format.printf "can't compile from BTOR2 input: unsupported"
 
 let compile_oracle_to_rust (type s): s t -> Scope.t -> string -> (
   string *
@@ -609,6 +643,8 @@ fun sys top_scope target ->
     failwith "can't compile from native input: unsupported"
   | Horn _ ->
     failwith "can't compile from horn clause input: unsupported"
+  | Btor _ ->
+    failwith "can't compile from BTOR2 input: unsupported"
 
 let contract_gen_param (type s): s t -> (Analysis.param * (Scope.t -> N.t)) =
 fun sys ->
@@ -630,6 +666,8 @@ fun sys ->
     failwith "can't generate contracts from native input: unsupported"
   | Horn _ ->
     failwith "can't generate contracts from horn clause input: unsupported"
+  | Btor _ ->
+    failwith "can't compile from BTOR2 input: unsupported"
 
 
 (* 

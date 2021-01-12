@@ -1,0 +1,57 @@
+-- 1 sort bitvec 1
+type s1 = bool; 
+-- 2 sort bitvec 32
+type s2 = uint32;
+-- 3 input 1 turn
+node btor(turn :s1) returns (bad : bool);
+-- 4 state 2 a
+var a :s2;
+-- 5 state 2 b 
+var b :s2;
+-- 6 zero 2
+const zero :s2 = (uint32 0); 
+-- ref 10
+var v10:s2;
+-- ref 11
+var v11:s2;
+-- 16 const 2 3
+const c16:s2 = (uint32 3);
+-- ref 17
+var v17:s1;
+-- ref 18
+var v18:s1;
+-- ref 19
+var v19:s1;
+-- 6 zero 2
+const c6 :s2 = (uint32 0); 
+-- 7 init 2 4 6
+--8 init 2 5 6   
+-- 9 one 2 
+const c9 :s2 = (uint32 1); 
+
+let
+    
+--10 add 2 4 9
+   v10 = (zero -> pre a) + c9;
+--11 add 2 5 9    
+   v11 = (zero -> pre b) + c9;
+-- 12 ite 2 3 4 10
+   a = zero -> if turn then pre a else v10;
+-- 13 ite 2 -3 5 11
+   b = zero -> if not turn then pre b else v11;
+   
+-- 14 next 2 4 12
+-- 15 next 2 5 13
+
+-- 17 eq 1 4 16
+   v17 = (a = c16);     
+-- 18 eq 1 5 16
+   v18 = (b = c16);    
+-- 19 and 1 17 18   
+   v19 = v17 and v18;
+   
+-- 20 bad 19
+  bad =  v19; 
+  --%PROPERTY not bad;
+
+tel

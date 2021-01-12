@@ -103,7 +103,6 @@ type style =
   | BG_Gray_B
   | BG_Default_B
 
-
 let assoc_style =  function
   | User i  -> "38;5;" ^ string_of_int i (* 256 colors *)
   | Normal -> "0"
@@ -205,12 +204,11 @@ let style_of_tag = function
       eprintf "tag : %s@." t;
       raise Not_found
 
-
-let start_tag t = 
+let start_stag t  = 
   try Printf.sprintf "[%sm" (assoc_style (style_of_tag t))
   with Not_found -> ""
 
-let stop_tag t =
+let stop_stag t =
   (* try *)
     let st = match style_of_tag t with
       | Bold -> Bold_off
@@ -240,8 +238,8 @@ let add_colors formatter =
   let old_fs = Format.pp_get_formatter_tag_functions formatter () in
   Format.pp_set_formatter_tag_functions formatter
     { old_fs with
-      mark_open_tag = start_tag;
-      mark_close_tag = stop_tag }
+      mark_open_tag = start_stag;
+      mark_close_tag = stop_stag }
 
 let _ =
   add_colors std_formatter;

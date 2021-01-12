@@ -21,6 +21,7 @@
 open Lib
 
 module Signals = TermLib.Signals
+module Btor = BtorAst
 
 (* Hide existential type parameter of to construct values of 'a InputSystem.t
    at runtime *)
@@ -94,7 +95,14 @@ let setup : unit -> any_input = fun () ->
       match Flags.input_format () with
       | `Lustre -> KEvent.log L_debug "Lustre input detected";
                    Input (InputSystem.read_input_lustre in_file)
-                   
+
+      | `Btor -> KEvent.log L_debug "Btor2 input detected";
+                  let btor_input = InputSystem.read_input_btor in_file in
+                  let btor_print = Btor.pp_btor Format.std_formatter (InputSystem.get_btor2 btor_input) in
+                  print_string btor_print ; 
+                  
+                  Input (btor_input)
+
       | `Native -> KEvent.log L_debug "Native input detected";
                    Input (InputSystem.read_input_native in_file)
                    
@@ -107,6 +115,9 @@ let setup : unit -> any_input = fun () ->
   with
   (* Could not create input system. *)
   | LustreAst.Parser_error  ->
+     (* We should have printed the appropriate message so just 'gracefully' exit *)
+     KEvent.terminate_log () ; exit ExitCodes.error
+  | BtorAst.Parser_error  ->
      (* We should have printed the appropriate message so just 'gracefully' exit *)
      KEvent.terminate_log () ; exit ExitCodes.error
   | LustreInput.NoMainNode msg ->
