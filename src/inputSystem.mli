@@ -32,9 +32,11 @@ exception UnsupportedFileFormat of string
 (** Read input from file *)
 val read_input_lustre : string -> LustreNode.t t
 
+(** Read input from btor file *)
 val read_input_btor : string -> BtorAst.btor t
 
 val get_btor2: BtorAst.btor t -> BtorAst.btor 
+
 (** Translate lustre contracts to properties. *)
 val translate_contracts_lustre : string -> string -> unit
 

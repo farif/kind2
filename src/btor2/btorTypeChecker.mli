@@ -1,5 +1,3 @@
-open BtorAst
-
 (* 
   num unsigned integer > 0 
       |- i > 0
@@ -25,4 +23,4 @@ let rec t_node (n: typNode) (ctx : typsort ctx) =
   | _ ->  
  *)
 
-val typ_check_btor : ('a list -> 'b) -> 'b
+val typ_check_btor_prog : ('a list -> 'b) -> 'b

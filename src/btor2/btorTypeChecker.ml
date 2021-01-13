@@ -1,8 +1,7 @@
-open BtorAst
-open BtorContext
 
 module R = Res
 module LA = BtorAst
+module LC = BtorContext
 
 type 'a tc_result = ('a, string) result
 
@@ -14,13 +13,13 @@ let type_error err = R.error ("Type error: " ^ err)
 
 let rec infer_type_sort: tc_context -> LA.sort -> tc_type
   = fun ctx  -> function
-    | Sid sid -> infer_type_sort ctx (lookup_sort sid ctx) 
+    | Sid sid -> infer_type_sort ctx (LC.lookup_sort sid ctx) 
     | Bitvec n -> BV n
     | Array (s1,s2) -> AR (infer_type_sort ctx s1, infer_type_sort ctx s2)
        
 let rec infer_type_node: tc_context -> LA.node -> tc_type tc_result 
   = fun ctx -> function
-  |  Nid nid -> infer_type_node ctx (lookup_node nid ctx)
+  |  Nid nid -> infer_type_node ctx (LC.lookup_node nid ctx)
   | Input(sid) -> R.ok (infer_type_sort ctx sid) 
   | State(sid) -> R.ok (infer_type_sort ctx sid) 
 
@@ -85,18 +84,21 @@ typops sid top n1  n2 n3 env =
   | Write ->  Top(typsort sid env, top, typnode n1 env, typnode n2 env, typnode n3 env)
 
 *)
-let rec infer_type_pnode: tc_context -> LA.pnode -> tc_type tc_result 
+let infer_type_pnode: tc_context -> LA.pnode -> tc_type tc_result 
 = fun ctx -> function
     Node(nid, n, id) -> infer_type_node ctx n
   | Sort(sid, s) -> R.ok (infer_type_sort ctx s) 
 
 
-let rec check_nodes ctx prog = 
-      infer_type_pnode ctx prog 
-              
-let typbtor prog env  =
-  match prog with 
-  | Btor2 pnodes -> check_nodes pnodes env 
+(* Add processed nodes to ctx and proceed. *)
+let rec type_check_nodes ctx prog =
+    match prog with
+    | [] -> []
+    | h :: t -> [infer_type_pnode ctx h] :: type_check_nodes (h::ctx) t 
 
-let typ_check_btor prog =
-    prog empty_ctx
+let typ_check_btor ctx prog  =
+  match prog with 
+  | LA.Btor2 pnodes -> type_check_nodes ctx pnodes 
+
+let typ_check_btor_prog btor_prog =
+    btor_prog LC.empty_ctx
