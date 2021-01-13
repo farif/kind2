@@ -1,6 +1,7 @@
 open BtorExpr
 open Format
 
+(*[TODO] Extend ADT with position argument *)
 exception Parser_error
 
 type num = string
@@ -74,6 +75,12 @@ let pp_opt_uint ppf opt : unit =
   match opt with Some v -> fprintf ppf "%a" pp_int v | None -> ()
 
 let pp_num ppf (i : num) : unit = fprintf ppf "%s" i
+
+
+let rec pp_type ppf (sid : btor_type) =
+  match sid with
+  | BV n -> fprintf ppf "BV(%i)" n
+  | AR (t1, t2) -> fprintf ppf "Array (%a,%a)" pp_type t1 pp_type t2
 
 let rec pp_sort ppf (sid : sort) =
   match sid with

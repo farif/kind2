@@ -1,3 +1,4 @@
+open Format
 
 module R = Res
 module LA = BtorAst
@@ -94,11 +95,18 @@ let infer_type_pnode: tc_context -> LA.pnode -> tc_type tc_result
 let rec type_check_nodes ctx prog =
     match prog with
     | [] -> []
-    | h :: t -> [infer_type_pnode ctx h] :: type_check_nodes (h::ctx) t 
+    | h :: t -> infer_type_pnode ctx h :: type_check_nodes (h::ctx) t 
 
 let typ_check_btor ctx prog  =
   match prog with 
   | LA.Btor2 pnodes -> type_check_nodes ctx pnodes 
 
-let typ_check_btor_prog btor_prog =
-    btor_prog LC.empty_ctx
+let typ_check_btor_prog input_prog = 
+    typ_check_btor LC.empty_ctx input_prog 
+
+type pfp = Format.formatter 
+
+let rec pp_tc_type ppf (sid : tc_type) =
+  match sid with
+  | BV n -> fprintf ppf "BV(%i)" n
+  | AR (t1, t2) -> fprintf ppf "Array (%a,%a)" pp_tc_type t1 pp_tc_type t2

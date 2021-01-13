@@ -2,6 +2,7 @@ open Lib
 open BtorReporting
 open Lexing
 open MenhirLib.General
+open Format 
 
 module LA = BtorAst
 
@@ -9,6 +10,7 @@ module LPMI = BtorParser.MenhirInterpreter
 module LL = BtorLexer          
 module LPE = BtorParserErrors
 module LPI = BtorParser.Incremental
+module TC = BtorTypeChecker
 
 let (>>=) = Res.(>>=)
 let (>>) = Res.(>>)
@@ -82,15 +84,28 @@ let ast_of_channel(in_ch: in_channel): BtorAst.btor =
   with
   | BtorLexer.Lexer_error err -> fail_at_position (Lib.position_of_lexing lexbuf.lex_curr_p) err  
 
+let func_report (results: TC.tc_type TC.tc_result)  = 
+  match results with   
+    | Ok d -> Log.log L_note "OK" ; TC.pp_tc_type std_formatter d  
+    | Error err -> failwith "Type Checking Failed" 
 
-
+let rec funct_list_report = function
+  | [] -> Log.log L_note "Type checking done"
+  | h :: t ->  func_report h ; funct_list_report t
+  
 (* Parse from input channel *)
 let of_channel in_ch =
   (* Get declarations from channel. *)
-  let btornodes = ast_of_channel in_ch
-  in btornodes
-
-  
+  let btorprog = ast_of_channel in_ch
+  in 
+    if Flags.no_tc ()
+     then btorprog
+     else 
+       let tc_res = TC.typ_check_btor_prog btorprog                   
+          in
+          Log.log L_note "Typechecking enabled.";
+          funct_list_report tc_res;  btorprog 
+          
 (* Returns the AST from a file. *)
 let ast_of_file filename =
   (* Open the given file for reading *)

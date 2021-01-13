@@ -41,7 +41,7 @@ let read_input_native input_file = Native (NativeInput.of_file input_file)
 let read_input_horn input_file = assert false
 
 let get_btor2 = function
-  | Btor btorprg -> btorprg
+  | Btor prog -> prog
   | _ -> assert false
 
 let silent_contracts_of (type s) : s t -> (Scope.t * string list) list
