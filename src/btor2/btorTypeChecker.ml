@@ -1,159 +1,78 @@
 open BtorAst
 open BtorContext
 
-(* 
-open Ast.Exp
+module R = Res
+module LA = BtorAst
 
-  num unsigned integer > 0 
-      |- i > 0
-  ? ------------
-    |- i : numT
+type 'a tc_result = ('a, string) result
 
-   type_lookup(context, i) = numT
-  -------------------------------
-        context |- i : SidT
+type tc_type  = LA.btor_type
+type tc_context = LA.pnode list
+let type_error err = R.error ("Type error: " ^ err)
 
-*)
+(*let typbool = BV 1*)
 
-(*
-              with 
-                Not_found -> raise (TyperError "abc") 
+let rec infer_type_sort: tc_context -> LA.sort -> tc_type
+  = fun ctx  -> function
+    | Sid sid -> infer_type_sort ctx (lookup_sort sid ctx) 
+    | Bitvec n -> BV n
+    | Array (s1,s2) -> AR (infer_type_sort ctx s1, infer_type_sort ctx s2)
+       
+let rec infer_type_node: tc_context -> LA.node -> tc_type tc_result 
+  = fun ctx -> function
+  |  Nid nid -> infer_type_node ctx (lookup_node nid ctx)
+  | Input(sid) -> R.ok (infer_type_sort ctx sid) 
+  | State(sid) -> R.ok (infer_type_sort ctx sid) 
 
---------------------------
-context | sid : context()
+  | Init (sid, n1, n2) -> let typ = infer_type_sort ctx sid in 
+                          if  (infer_type_node ctx n1 =  infer_type_node ctx n1) then 
+                          R.ok typ else 
+                          type_error ("Init error: ")
 
-let rec typ_node (n : node) (env :typsort ctx) =
-  match n with
-  | Nid nid -> let nidv = string_of_int nid in lookup (string_of_int nid) env
-  | Input sid -> let ts = typsort sid env in InputT ts
-  | State sid -> let ts = typsort sid env in StateT ts
-  | Init (sid, n1, n2) -> let tsid = typsort sid env in
-                          let ts1 = typ_node n1 env in
-                          let ts2 = typ_node n2 env in  
-                                InitT (tsid, ts1, n1, ts2, n2) 
-  | Next (sid, n1, n2) -> let tsid = typsort sid env in
-                        let ts1 = typ_node n1 env in
-                        let ts2 = typ_node n2 env in  
-                        Next (tsid, ts1, n1, ts2, n2)
+  | Next(sid, n1, n2) -> let typ = infer_type_sort ctx sid in 
+                          if  (infer_type_node ctx n1 =  infer_type_node ctx n1) then R.ok typ 
+                          else type_error ("Next error: ")
 
-*)
-(*
-let get_sid node = 
-  match node with
-  | Nid nid -> nid
-  | _ -> failwith "No nid Found!!"   
+  | Uop(sid, uop, n) -> let typ = infer_type_sort ctx sid in
+                          let ntyp = infer_type_node ctx n in
+                            if R.ok typ = ntyp then R.ok typ 
+                            else type_error ("Next error: ")
 
-let get_bvsize bv =
-  match bv with
-  | Bitvec n -> n
-  | _ -> failwith "BV type expected"
-*)
+                         (* match uop with
+                             Not -> if typ = ntyp then R.ok typ 
+                             else type_error ("Not expression failed")
+                            | Neg -> if typ = ns then R.ok typ 
+                             else type_error ("Neg expression failed")
+                            | Redand -> if typ = typbool then R.ok typ 
+                              else type_error ("Redand expression failed")
+                            | Redor -> if typ = typbool then R.ok typ 
+                              else type_error ("Redor expression failed")
+                            | Redxor -> if typ = typbool then R.ok typ 
+                              else type_error ("Redxor expression failed")
+                          *)
 
-let typbool = Bitvec 1
-
-let rec typsort s env =
-  match s with
-    Sid sid ->  let s = int_of_string sid in if s > 0 then typsort (lookup_sort sid env) env else raise(Failure ("Sid %s lower than zero <= 0" ^ sid)) (* (env :typsort ctx) let v = string_of_int i in lookup v env*)                 
-  | Bitvec n ->  if n > 0 then  Bitvec n else  raise(Failure ("Bitvec num is invalid" ^ string_of_int n))
-  | Array (sid1, sid2) -> let s1 = typsort sid1 env in 
-                          let s2 = typsort sid2 env in 
-                          Array(s1, s2)
-
-let rec typ_node n env =
-  match n with
-    Nid nid -> typ_node (lookup_node nid env) env
-  | Input sid -> typsort sid env 
-  | State sid -> typsort sid env
-  | Init (sid, _, _) ->  typsort sid env
-  | Next (sid, _, _) -> typsort sid env
-  | Uop (sid, _, _) -> typsort sid env
-  | Bop (sid, _, _, _) -> typsort sid env
-  | Top (sid, _, _, _, _) -> typsort sid env
-  | Idx (sid, _, _, _, _) -> typsort sid env
-  | One(sid) -> typsort sid env
-  | Ones(sid) -> typsort sid env
-  | Zero(sid) -> typsort sid env
-  | Constbin (sid, _) -> typsort sid env
-  | Constdec (sid, _) -> typsort sid env
-  | Consthex (sid, _) -> typsort sid env
-  | Bad n -> typ_node n env
-  | Constraint n -> typ_node n env
-  | Output n -> typ_node n env
-
-let rec typnode n env =
-  match n with
-    Nid nid -> typnode (lookup_node nid env) env
-  | Input(sid) -> let s = typsort sid env in 
-                 Input s 
-  | State(sid) -> let s = typsort sid env in 
-                 State s
-  | Init (sid, n1, n2) -> let s = typsort sid env in 
-                          let n1 = typnode n1 env in
-                          let n2 = typnode n2 env in
-                          let ns1 = typ_node n1 env in
-                          let ns2 = typ_node n2 env in
-                          if s = ns1 && s = ns2 then Init(s, n1,  n2) else raise(Failure "Init ill-defined") 
-  
-  | Next(sid, n1, n2) -> let s = typsort sid env in 
-                          let n1 = typnode n1 env in
-                          let n2 = typnode n2 env in
-                          let ns1 = typ_node n1 env in
-                          let ns2 = typ_node n2 env in
-                          if s = ns1 && s = ns2 then Next(s, n1,  n2) else raise(Failure "Next ill-defined") 
-
-  | Uop(sid, uop, n) -> let s = typsort sid env in 
-                         let n = typnode n env in
-                         let ns = typ_node n env in
-                         (match uop with
-                             Not -> if s = ns then Uop(s, Not, n) else raise(Failure "Not ill-defined")
-                            | Neg -> if s = ns then Uop(s, Neg, n) else raise(Failure "Neg ill-defined")
-                            | Redand -> if s = typbool then Uop(s, uop, n) else raise(Failure "Redand ill-defined")
-                            | Redor -> if s = typbool then  Uop(s, uop, n) else raise(Failure "Redor ill-defined")
-                            | Redxor -> if s= typbool then  Uop(s, uop, n) else raise(Failure "Redxor ill-defined")
-                          )
-
-  | Bop(sid, bop, n1, n2) -> let s = typsort sid env in 
-                              let n1 = typnode n1 env in
-                              let n2 = typnode n2 env in
-                              Bop(s, bop, n1,  n2)
-
-  | Top(sid, top, n1, n2, n3) -> let s = typsort sid env in 
-                                  let n1 = typnode n1 env in
-                                  let n2 = typnode n2 env in
-                                  let n3 = typnode n3 env in
-                                  let ns1 = typ_node n1 env in
-                                  let ns2 = typ_node n2 env in
-                                  let ns3 = typ_node n3 env in
-                                  (match top with
-                                    Ite ->  if ns1 = typbool && s = ns2 && s = ns3 then Top(s, top, n1, n2, n3) else raise(Failure "ITE ill-defined")
-                                   | Write -> Top(s, top, n1, n2, n3)
-                                  )        
+  | Bop(sid, bop, n1, n2) ->  R.ok (infer_type_sort ctx sid) 
+                              
+  | Top(sid, top, n1, n2, n3) -> R.ok (infer_type_sort ctx sid) 
+                                  (*match top with
+                                    Ite ->  if typ = typbool && typ = n2typ && typ = n3typ then typ 
+                                    else type_error ("ITE expression failed")
+                                   | Write -> if typ = n2typ && typ = n3typ then typ 
+                                    else type_error ("Write expression failed")
+                                  *)        
                                   
 
-  | Idx(sid, opidx, n, u1, u2) -> let s = typsort sid env in 
-                                   let n = typnode n env in
-                                   Idx(s, opidx, n, u1, u2) 
-
-  | One(sid) -> let s = typsort sid env in  
-                One s  
-  | Ones(sid) -> let s = typsort sid env in 
-                Ones s
-  | Zero(sid) -> let s = typsort sid env in
-                Zero s
-  | Constbin(sid, bv) -> let s = typsort sid env in 
-                          Constbin(s, bv)
-  | Constdec(sid, dec) -> let s = typsort sid env in
-                          Constdec(s, dec)
-  | Consthex (sid, hex) -> let s = typsort sid env in
-                          Consthex(s, hex)
-  | Bad n -> let n = typnode n env in
-              Bad n
-  | Constraint n -> let n = typnode n env in 
-                    Constraint n
-  | Output n -> let n = typnode n env in
-                Output n
+  | Idx(sid, opidx, n, u1, u2) -> R.ok (infer_type_sort ctx sid)
+  | One(sid) -> R.ok (infer_type_sort ctx sid)
+  | Ones(sid) -> R.ok (infer_type_sort ctx sid)
+  | Zero(sid) -> R.ok (infer_type_sort ctx sid)
+  | Constbin(sid, bv) -> R.ok (infer_type_sort ctx sid) 
+  | Constdec(sid, dec) -> R.ok (infer_type_sort ctx sid)
+  | Consthex (sid, hex) -> R.ok (infer_type_sort ctx sid)
+  | Bad n -> infer_type_node ctx n
+  | Constraint n -> infer_type_node ctx n
+  | Output n -> infer_type_node ctx n 
 (*  and
-
 typops sid top n1  n2 n3 env = 
   match top with
     Ite ->  let cond_op = int_of_string (get_sid n1) in 
@@ -166,53 +85,18 @@ typops sid top n1  n2 n3 env =
   | Write ->  Top(typsort sid env, top, typnode n1 env, typnode n2 env, typnode n3 env)
 
 *)
-let typpnode pn env =
-  match pn with
-    Node(nid, n, id) -> Node(nid, typnode n env, id)
-  | Sort(sid, s) -> Sort(sid, typsort s env)
+let rec infer_type_pnode: tc_context -> LA.pnode -> tc_type tc_result 
+= fun ctx -> function
+    Node(nid, n, id) -> infer_type_node ctx n
+  | Sort(sid, s) -> R.ok (infer_type_sort ctx s) 
 
-(*in (string_of_int sid, tv) :: env;  
-  raise (TypeCheckingError "Error")
-  (* Auxiliary function*)
-*)
 
-let rec typpnodes (nodeList) env  =
-  match nodeList with 
-  | [] -> []
-  | h :: t ->  let n = typpnode h env in 
-                n :: typpnodes t (n :: env)  
-
+let rec check_nodes ctx prog = 
+      infer_type_pnode ctx prog 
+              
 let typbtor prog env  =
   match prog with 
-  | Btor2 pnodes -> let bt_nodes = typpnodes pnodes env in
-    Btor2 bt_nodes
+  | Btor2 pnodes -> check_nodes pnodes env 
 
-(*
-let typ_opt_pnodes (opt_nodes) =
-  match opt_nodes with
-  | Some  pnodes -> typ_pnodes pnodes pnodes
-  | None  -> []
-
-
-let check_prog (prog :btor) (env :typ ctx)  =
-   match prog with Btor2 
-    nodes -> 
-        match nodes with -> 
-      | Some opt_nodes ->  Some check_pnodes nodes env
-      | None -> None
-  | None -> None   
-
-let rec t_node (n: typNode) (ctx : typsort ctx) =
-  match n with
-  | Sort(id, s) -> xtype = t_sort s ctx in 
-                  (id, xtype) :: ctx  
-  | _ ->  
-
-*)
-
-
-(*typ_node n  env1 env2,
-
-
-
- *)
+let typ_check_btor prog =
+    prog empty_ctx

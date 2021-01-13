@@ -25,14 +25,4 @@ let rec t_node (n: typNode) (ctx : typsort ctx) =
   | _ ->  
  *)
 
-val typsort : sort -> pnode list -> sort 
-
-(*val typ_node : node -> pnode list -> sort*)
-
-val typnode : node -> pnode list -> node
-
-val typpnode : pnode -> pnode list -> pnode
-
-val typpnodes : pnode list -> pnode list -> pnode list
-
-val typbtor : btor -> pnode list -> btor
+val typ_check_btor : ('a list -> 'b) -> 'b

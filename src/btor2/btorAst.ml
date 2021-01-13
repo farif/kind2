@@ -5,7 +5,7 @@ exception Parser_error
 
 type num = string
 type uint = int
-
+  
 type sort = 
     Sid of num 
   | Bitvec of uint 
@@ -41,6 +41,12 @@ type pnode =
   | Sort of num * sort
 
 type btor = Btor2 of pnode list
+
+(* Btor Node Type *)
+type btor_type = 
+    BV of uint
+  | AR of btor_type * btor_type
+
 
 (* Pretty Printing *)
 type pfp = Format.formatter 
