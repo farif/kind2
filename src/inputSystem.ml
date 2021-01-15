@@ -53,7 +53,7 @@ let silent_contracts_of (type s) : s t -> (Scope.t * string list) list
         (scope, silent_contracts) :: acc
     ) []
 
-  | Btor subsystem -> raise (UnsupportedFileFormat "Btor2")
+  | Btor subsystem -> []
 
   | Native subsystem -> raise (UnsupportedFileFormat "Native")
 
