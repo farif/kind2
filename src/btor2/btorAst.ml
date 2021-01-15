@@ -48,7 +48,6 @@ type btor_type =
     BV of uint
   | AR of btor_type * btor_type
 
-
 (* Pretty Printing *)
 type pfp = Format.formatter 
 

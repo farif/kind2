@@ -360,7 +360,7 @@ let trans_sys_of_analysis (type s) ?(preserve_sig = false)
   | Native sub -> (fun _ -> sub.SubSystem.source, Native sub)
     
   | Horn _ -> assert false
-  | Btor _ -> assert false
+  | Btor prog -> assert false (* BtorTransSys.filter_nodes prog*)
 
 
 
