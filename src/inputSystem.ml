@@ -27,7 +27,7 @@ module SVM = SVar.StateVarMap
 
 type _ t =
 | Lustre : (LustreNode.t S.t * LustreGlobals.t * LustreAst.declaration list) -> LustreNode.t t
-| Btor : BtorAst.btor -> BtorAst.btor t
+| Btor : BtorAst.btor S.t -> BtorAst.btor t
 | Native : TransSys.t S.t -> TransSys.t t
 | Horn : unit S.t -> unit t
 
@@ -41,7 +41,7 @@ let read_input_native input_file = Native (NativeInput.of_file input_file)
 let read_input_horn input_file = assert false
 
 let get_btor2 = function
-  | Btor prog -> prog
+  | Btor p -> p.source
   | _ -> assert false
 
 let silent_contracts_of (type s) : s t -> (Scope.t * string list) list
@@ -272,9 +272,14 @@ let interpreter_param (type s) (input_system : s t) =
         )
         Scope.Map.empty (S.all_subsystems sub)
     )
+    | Btor ({S.scope} as sub) -> (scope,
+      List.fold_left (
+        fun abs_map ({ S.scope; S.has_impl }) ->
+          Scope.Map.add scope (not has_impl) abs_map
+        )
+        Scope.Map.empty (S.all_subsystems sub)
+    )
     | Horn _ -> raise (UnsupportedFileFormat "Horn")
-    | Btor _ -> raise (UnsupportedFileFormat "Btor2")
-
   in
 
   Analysis.Interpreter {
@@ -358,9 +363,8 @@ let trans_sys_of_analysis (type s) ?(preserve_sig = false)
     )
 
   | Native sub -> (fun _ -> sub.SubSystem.source, Native sub)
-    
+  | Btor sub -> assert false(*fun _ -> sub.SubSystem.source, Btor sub*)    
   | Horn _ -> assert false
-  | Btor prog -> assert false (* BtorTransSys.filter_nodes prog*)
 
 
 
@@ -377,10 +381,11 @@ let pp_print_path_pt
     Format.eprintf "pp_print_path_pt not implemented for native input@.";
     ()
     (* assert false *)
-
+  | Btor sub ->
+    Format.eprintf "pp_print_path_pt not implemented for btor2 input@.";
+    ()
   | Horn _ -> assert false
-  | Btor _ -> assert false
-
+  
 
 let pp_print_path_xml
 (type s) (input_system : s t) trans_sys instances first_is_init ppf model =
@@ -394,10 +399,11 @@ let pp_print_path_xml
   | Native _ ->
     Format.eprintf "pp_print_path_xml not implemented for native input@.";
     assert false;
-
+  | Btor _ ->
+    Format.eprintf "pp_print_path_xml not implemented for btor2 input@.";
+    assert false;
 
   | Horn _ -> assert false
-  | Btor _ -> assert false
 
 
 let pp_print_path_json
@@ -413,8 +419,11 @@ let pp_print_path_json
     Format.eprintf "pp_print_path_json not implemented for native input@.";
     assert false;
 
+  | Btor _ ->
+    Format.eprintf "pp_print_path_json not implemented for btor2 input@.";
+    assert false;
+
   | Horn _ -> assert false
-  | Btor _ -> assert false
 
 
 let pp_print_path_in_csv
@@ -429,8 +438,11 @@ let pp_print_path_in_csv
     Format.eprintf "pp_print_path_in_csv not implemented for native input";
     assert false
 
+  | Btor _ ->
+    Format.eprintf "pp_print_path_in_csv not implemented for btor2 input";
+    assert false
+
   | Horn _ -> assert false
-  | Btor _ -> assert false
 
 
 let reconstruct_lustre_streams (type s) (input_system : s t) state_vars =

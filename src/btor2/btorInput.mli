@@ -111,8 +111,8 @@ val of_file : string -> LustreNode.t SubSystem.t * LustreGlobals.t * LustreAst.t
 exception NoMainNode of string
 
 (** Parse from the file, returns the AST. *)
-val ast_of_file : string -> BtorAst.btor
-val of_file : string -> BtorAst.btor 
+val ast_of_file : string -> BtorAst.btor 
+val of_file : string -> BtorAst.btor SubSystem.t
   
 
 (* 

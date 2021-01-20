@@ -11,6 +11,7 @@ module LL = BtorLexer
 module LPE = BtorParserErrors
 module LPI = BtorParser.Incremental
 module TC = BtorTypeChecker
+module I = BtorIdent
 
 let (>>=) = Res.(>>=)
 let (>>) = Res.(>>)
@@ -122,4 +123,30 @@ let of_file filename =
     | "" -> stdin
     | _ -> open_in filename
   in
-  of_channel in_ch
+  let btor_nodes = of_channel in_ch in
+      let top = I.mk_string_ident "top" in 
+        (* Scope of the system from node name *)
+      let scope = [I.string_of_ident false top] in
+
+      (* Does node have contracts? *)
+      let has_contract = false in 
+
+      (* Does node have modes? *)
+      let has_modes = false in
+
+      (* Does node have an implementation? *)
+      let has_impl = false in
+
+      (* Construct subsystem of node *)
+      let subsystem = 
+
+        { SubSystem.scope;
+          SubSystem.source = btor_nodes;
+          SubSystem.has_contract;
+          SubSystem.has_modes;
+          SubSystem.has_impl;
+          SubSystem.subsystems = []  }
+
+      in
+          subsystem
+
