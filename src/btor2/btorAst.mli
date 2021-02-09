@@ -59,7 +59,7 @@ val pp_opt_str : pfp -> string option -> unit
 val pp_opt_uint : pfp -> int option -> unit
 val pp_num : pfp -> num -> unit
 
-val pp_type : pfp -> btor_type -> unit
+(* val pp_type : pfp -> btor_type -> unit *)
 val pp_sort : pfp -> sort -> unit
 val pp_uop : pfp -> uop -> unit
 val pp_bop : pfp -> bop -> unit

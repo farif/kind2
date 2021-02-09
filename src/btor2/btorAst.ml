@@ -76,70 +76,70 @@ let pp_opt_uint ppf opt : unit =
 let pp_num ppf (i : num) : unit = fprintf ppf "%s" i
 
 
-let rec pp_type ppf (sid : btor_type) =
+(* let rec pp_type ppf (sid : btor_type) =
   match sid with
   | BV n -> fprintf ppf "BV(%i)" n
-  | AR (t1, t2) -> fprintf ppf "Array (%a,%a)" pp_type t1 pp_type t2
+  | AR (t1, t2) -> fprintf ppf "Array (%a,%a)" pp_type t1 pp_type t2 *)
 
 let rec pp_sort ppf (sid : sort) =
   match sid with
   | Sid i -> pp_str ppf i
   (*  | Bool b -> fprintf ppf "Boolean(%b)" b *)
-  | Bitvec n -> fprintf ppf "BV(%i)" n
-  | Array (sid1, sid2) -> fprintf ppf "Array (%a,%a)" pp_sort sid1 pp_sort sid2
+  | Bitvec n -> fprintf ppf "sort bitvec %i" n
+  | Array (sid1, sid2) -> fprintf ppf "sort Array (%a,%a)" pp_sort sid1 pp_sort sid2
 
 let pp_uop ppf (op : uop) =
   match op with
-  | Not -> fprintf ppf "NOT"
-  | Neg -> fprintf ppf "NEG"
+  | Not -> fprintf ppf "not"
+  | Neg -> fprintf ppf "neg"
   | _ -> fprintf ppf "Add Later..."
 
 let pp_bop ppf (op : bop) =
   match op with
-  | And -> fprintf ppf "AND"
-  | Eq -> fprintf ppf "EQ"
-  | Neq -> fprintf ppf "NEQ"
-  | Add -> fprintf ppf "ADD"
+  | And -> fprintf ppf "and"
+  | Eq -> fprintf ppf "eq"
+  | Neq -> fprintf ppf "neq"
+  | Add -> fprintf ppf "add"
   | _ -> fprintf ppf "Add Later..."
 
 let pp_top ppf (op : top) =
-  match op with Ite -> fprintf ppf "ITE" | Write -> fprintf ppf "WRITE"
+  match op with Ite -> fprintf ppf "ite" | Write -> fprintf ppf "write"
 
 let pp_idx ppf (op : opidx) =
   match op with
-  | Slice -> fprintf ppf "SLICE"
-  | Uext -> fprintf ppf "UEXT"
-  | Sext -> fprintf ppf "SEXT"
+  | Slice -> fprintf ppf "slice"
+  | Uext -> fprintf ppf "uext"
+  | Sext -> fprintf ppf "sext"
 
 let rec pp_node ppf (n : node) =
   match n with
   | Nid i -> fprintf ppf "%a" pp_num i
 
-  | Input (sid) -> fprintf ppf "Input <%a> "  pp_sort sid
-  | State (sid) -> fprintf ppf "State <%a> "  pp_sort sid
+  | Input (sid) -> fprintf ppf "input %a"  pp_sort sid
+  | State (sid) -> fprintf ppf "state %a"  pp_sort sid
   | Init (sid, n1, n2) ->
-    fprintf ppf "Init :<%a> [%a] [%a] " pp_sort sid pp_node n1 pp_node n2 
+    fprintf ppf "init %a %a %a" pp_sort sid pp_node n1 pp_node n2 
   | Next (sid, n1, n2) ->
-    fprintf ppf "Next :<%a> [%a] [%a] " pp_sort sid pp_node n1 pp_node n2 
+    fprintf ppf "next %a %a %a" pp_sort sid pp_node n1 pp_node n2 
 
-  | Uop (sid, op1, n1) -> fprintf ppf "%a :<%a> [%a]" pp_sort sid pp_uop op1 pp_node n1 
+  | Uop (sid, op1, n1) -> fprintf ppf "%a %a %a" pp_sort sid pp_uop op1 pp_node n1 
   | Bop (sid, op2, n1, n2) ->
-    fprintf ppf "%a :<%a> [%a] [%a] " pp_bop op2 pp_sort sid pp_node n1 pp_node n2 
+    fprintf ppf "%a %a %a %a" pp_bop op2 pp_sort sid pp_node n1 pp_node n2 
   | Top (sid, op3, n1, n2, n3) ->
-    fprintf ppf "%a :<%a> [%a] [%a] [%a]" pp_top op3 pp_sort sid pp_node n1 pp_node n2 pp_node n3 
+    fprintf ppf "%a %a %a %a %a" pp_top op3 pp_sort sid pp_node n1 pp_node n2 pp_node n3 
   | Idx (sid, opidx, n, u1, u2) ->
-    fprintf ppf "%a :<%a> [%a] [%a] [%a]" pp_idx opidx pp_sort sid pp_node n pp_int u1 pp_opt_uint u2 
+    fprintf ppf "%a %a %a %a %a" pp_idx opidx pp_sort sid pp_node n pp_int u1 pp_opt_uint u2 
 
-  | One(sid) -> fprintf ppf "One :<%a>" pp_sort sid
-  | Ones(sid) -> fprintf ppf "Ones :<%a>" pp_sort sid
-  | Zero(sid) -> fprintf ppf "Zero :<%a>" pp_sort sid
-  | Constbin (sid, v) -> fprintf ppf "ConstBin :<%a> %a" pp_sort sid pp_bool_list v
-  | Constdec (sid, v) -> fprintf ppf "ConstDec :<%a> %a" pp_sort sid pp_int v 
-  | Consthex (sid, v) -> fprintf ppf "ConstHex :<%a> %a" pp_sort sid pp_str v 
+  | One(sid) -> fprintf ppf "one %a" pp_sort sid
+  | Ones(sid) -> fprintf ppf "ones %a" pp_sort sid
+  | Zero(sid) -> fprintf ppf "zero %a" pp_sort sid
+  | Constbin (sid, v) -> fprintf ppf "constbin %a %a" pp_sort sid pp_bool_list v
+  | Constdec (sid, v) -> fprintf ppf "constdec %a %a" pp_sort sid pp_int v 
+  | Consthex (sid, v) -> fprintf ppf "consthex %a %a" pp_sort sid pp_str v 
 
-  | Bad n -> fprintf ppf "BAD %a" pp_node n
-  | Constraint n -> fprintf ppf "INV %a" pp_node n
-  | Output n -> fprintf ppf "OUTPUT %a" pp_node n
+  | Bad n -> fprintf ppf "bad %a" pp_node n
+  | Constraint n -> fprintf ppf "inv %a" pp_node n
+  | Output n -> fprintf ppf "output %a" pp_node n
 
 let pp_pnode ppf (n : pnode) =
   match n with

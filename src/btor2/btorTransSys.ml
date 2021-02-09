@@ -84,8 +84,8 @@ let filter_nodes subsystem =
     match subsystem with
     | LA.Btor2 pnodes -> List.fold_right extract_nodes pnodes []
 
-(*
-let trans_sys_of_nodes
+
+(* let trans_sys_of_nodes
     ?(preserve_sig = false)
     ?(slice_nodes = false)
     subsystem analysis_param
@@ -114,7 +114,9 @@ let trans_sys_of_nodes
     
     try 
 
-    let init_state = StateVar.mk_state_var "X" [] (Type.mk_int ()) in
+    let init_state = StateVar.mk_state_var "X" [] (Type.mk_int ()) 
+    
+    in
         let scope = Scope.mk_scope [] in
       (* Create a transition system for each node 
       trans_sys_of_node'*)
@@ -168,8 +170,8 @@ let trans_sys_of_nodes
   (* Reset garbage collector to its initial settings *)
   Lib.reset_gc_params ();
 
-  trans_sys
-*)
+  trans_sys *)
+
 (* let  btor_to_trans prog =
     let statevars = filter_nodes prog in
         let trans_sys =

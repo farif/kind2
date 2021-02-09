@@ -4,6 +4,8 @@ module R = Res
 module LA = BtorAst
 module LC = BtorContext
 
+let (>>=) = R.(>>=)
+
 type 'a tc_result = ('a, string) result
 
 type tc_type  = LA.btor_type
@@ -20,13 +22,14 @@ let rec infer_type_sort: tc_context -> LA.sort -> tc_type
        
 let rec infer_type_node: tc_context -> LA.node -> tc_type tc_result 
   = fun ctx -> function
-  |  Nid nid -> infer_type_node ctx (LC.lookup_node nid ctx)
+  | Nid nid -> infer_type_node ctx (LC.lookup_node nid ctx)
   | Input(sid) -> R.ok (infer_type_sort ctx sid) 
   | State(sid) -> R.ok (infer_type_sort ctx sid) 
 
   | Init (sid, n1, n2) -> let typ = infer_type_sort ctx sid in 
-                          if  (infer_type_node ctx n1 =  infer_type_node ctx n1) then 
-                          R.ok typ else 
+                          infer_type_node ctx n1 >>= 
+                          fun t1y -> infer_type_node ctx n2 >>=
+                          fun t2y -> if t1y = t2y && typ = t1y then R.ok typ else 
                           type_error ("Init error: ")
 
   | Next(sid, n1, n2) -> let typ = infer_type_sort ctx sid in 
