@@ -251,8 +251,15 @@ let mcs_params (type s) (input_system : s t) =
       |> List.map param_for_subsystem
     else
       [sub |> param_for_subsystem]
+  | Btor sub ->  raise (UnsupportedFileFormat "Btor2")
+    (* if Flags.modular ()
+    then
+      S.all_subsystems sub
+      |> List.rev
+      |> List.map param_for_subsystem
+    else
+      [sub |> param_for_subsystem] *)
   | Horn _ -> raise (UnsupportedFileFormat "Horn")
-  | Btor _ -> raise (UnsupportedFileFormat "Btor2")
 
 let interpreter_param (type s) (input_system : s t) =
 
@@ -363,7 +370,16 @@ let trans_sys_of_analysis (type s) ?(preserve_sig = false)
     )
 
   | Native sub -> (fun _ -> sub.SubSystem.source, Native sub)
-  | Btor sub -> assert false(*fun _ -> sub.SubSystem.source, Btor sub*)    
+  | Btor sub -> (
+                  function analysis ->
+                    let t, s = 
+                      BtorTransSys.trans_sys_of_nodes ~preserve_sig ~slice_nodes sub.SubSystem.source analysis
+                    in
+
+                    t, Btor sub
+                  );
+                
+  
   | Horn _ -> assert false
 
 

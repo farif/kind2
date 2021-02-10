@@ -585,7 +585,6 @@ let check_analysis_flags () =
 
 (** Runs the analyses produced by the strategy module. *)
 let run in_sys =
-
   (* Who's active? *)
   match Flags.enabled () with
 

@@ -36,13 +36,12 @@ let
 --11 add 2 5 9    
    v11 = (zero -> pre b) + c9;
 -- 12 ite 2 3 4 10
+-- 14 next 2 4 12
    a = zero -> if turn then pre a else v10;
 -- 13 ite 2 -3 5 11
+-- 15 next 2 5 13
    b = zero -> if not turn then pre b else v11;
    
--- 14 next 2 4 12
--- 15 next 2 5 13
-
 -- 17 eq 1 4 16
    v17 = (a = c16);     
 -- 18 eq 1 5 16

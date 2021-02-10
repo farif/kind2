@@ -1,10 +1,13 @@
 %{ 
+  open Lib
   open BtorAst
   open BtorExpr
   
 (* module A = BtorAst *)
 
   exception ParserError of string
+
+let mk_pos = position_of_lexing 
 
 (*    exception ParserError of string *)
 
@@ -89,7 +92,7 @@ main: bp = nodes EOF { Btor2 bp } (*Nodes bp*)
 nodes: n = pnode {[n]}
     | n = pnode m = nodes { n :: m }
     
-pnode: nid = Num n = node id = option(ID) NL { Node(nid, n, id) }
+pnode: nid = Num n = node id = option(ID) NL { Node(mk_pos $startpos, nid, n, id) }
     | sid = Num s = sort NL { Sort(sid, s) }
 
 sort_id: sid = Num {Sid sid}

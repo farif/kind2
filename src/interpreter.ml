@@ -80,7 +80,7 @@ let main input_file input_sys aparam trans_sys =
         KEvent.log L_warn "@[<v>Error reading interpreter input file.@,%s@]" e;
         raise (Failure "main")
   in
-
+  
   let nb_inputs = List.filter StateVar.is_input trans_svars |> List.length in
 
   (* Check that constant inputs are indeed constant. *)
@@ -160,13 +160,13 @@ let main input_file input_sys aparam trans_sys =
 
   (* Determine logic for the SMT solver *)
   let logic = TransSys.get_logic trans_sys in
-
+  (* TermLib.pp_print_logic Format.std_formatter logic; *)
   (* Create solver instance *)
   let solver = 
     Flags.Smt.solver ()
     |> SMTSolver.create_instance ~produce_assignments:true logic
   in
-
+  
   (* Create a reference for the solver. Only used in on_exit. *)
   ref_solver := Some solver;
 
@@ -185,7 +185,6 @@ let main input_file input_sys aparam trans_sys =
 
   (* Assert transition relation up to number of steps *)
   assert_trans solver trans_sys (Numeral.of_int steps);
-
   (* Assert equation of state variable and its value at each
      instant *)
   List.iter
@@ -256,7 +255,6 @@ let main input_file input_sys aparam trans_sys =
     )
 
   else
-
     (* Transition relation must be satisfiable *)
     KEvent.log L_error "Transition relation not satisfiable"
 

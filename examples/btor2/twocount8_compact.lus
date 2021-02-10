@@ -8,6 +8,6 @@ let
   b = (uint8 0) -> if not turn then pre(b) + (uint8 3) else pre b;
 
   bad =  (a = (uint8 2) and b = (uint8 2)) ; 
-  check not bad;
+  --check not bad;
 
 tel

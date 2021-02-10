@@ -90,7 +90,7 @@ typops sid top n1  n2 n3 env =
 *)
 let infer_type_pnode: tc_context -> LA.pnode -> tc_type tc_result 
 = fun ctx -> function
-    Node(nid, n, id) -> infer_type_node ctx n
+    Node(_,nid, n, id) -> infer_type_node ctx n
   | Sort(sid, s) -> R.ok (infer_type_sort ctx s) 
 
 

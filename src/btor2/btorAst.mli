@@ -1,3 +1,4 @@
+open Lib
 open BtorExpr
 
 exception Parser_error
@@ -36,7 +37,7 @@ type node =
   | Output of node
 
 type pnode = 
-    Node of num * node * string option 
+    Node of position * num * node * string option 
   | Sort of num * sort
 
 type btor = Btor2 of pnode list

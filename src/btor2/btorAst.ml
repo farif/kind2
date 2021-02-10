@@ -1,3 +1,4 @@
+open Lib
 open BtorExpr
 open Format
 
@@ -38,7 +39,7 @@ type node =
   | Output of node
 
 type pnode = 
-    Node of num * node * string option 
+    Node of position * num * node * string option 
   | Sort of num * sort
 
 type btor = Btor2 of pnode list
@@ -143,7 +144,7 @@ let rec pp_node ppf (n : node) =
 
 let pp_pnode ppf (n : pnode) =
   match n with
-    Node (i, n, id) -> fprintf ppf "%a %a %a" pp_num i pp_node n pp_opt_str id
+    Node (_,i, n, id) -> fprintf ppf "%a %a %a" pp_num i pp_node n pp_opt_str id
   | Sort(i, sid) -> fprintf ppf "%a %a" pp_num i pp_sort sid
 
 let rec pp_sorts ppf sorts =
