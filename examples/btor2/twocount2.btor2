@@ -1,5 +1,5 @@
 1 sort bitvec 1
-2 sort bitvec 2
+2 sort bitvec 32
 3 input 1 turn
 4 zero 2
 5 state 2 a

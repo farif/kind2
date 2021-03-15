@@ -112,11 +112,12 @@ let trans_sys_of_nodes
   let pnodes =  subsystem 
   in
    
-    let init_state = StateVar.mk_state_var "X" [] (Type.mk_int ())     
+    let init_state = StateVar.mk_state_var "X" [] (Type.mk_int ())
+    in 
+     let int_var = Var.mk_state_var_instance init_state Numeral.zero 
       in
 
   (* Get types of state variables*)
-
   (* Usefull instances of state variables *)
     let init_uf_symbol = 
       UfSymbol.mk_uf_symbol
@@ -135,7 +136,7 @@ let trans_sys_of_nodes
       in
         let trans_args = []
         in
-        let init_term = Term.t_false
+        let init_term = Term.mk_eq [Term.mk_var int_var; Term.mk_num_of_int 8]
       in
         let trans_formals = Term.t_true
         in
